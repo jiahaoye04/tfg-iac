@@ -1,0 +1,16 @@
+---
+- name: Verificar Nginx en nginx-proxy
+  hosts: infraestructura
+  become: true
+
+  tasks:
+    - name: Asegurar que Nginx está instalado
+      apt:
+        name: nginx
+        state: present
+
+    - name: Asegurar que Nginx está corriendo
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
