@@ -21,6 +21,15 @@ resource "proxmox_virtual_environment_vm" "vm" {
     enabled = false
   }
 
+  bios    = "ovmf"
+  machine = "q35"
+
+  efi_disk {
+    datastore_id = "local-lvm"
+    file_format  = "raw"
+    type         = "4m"
+  }
+
   cpu {
     cores = var.cores
     type  = var.cpu_type
@@ -32,6 +41,12 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   network_device {
     bridge = var.network_bridge
+  }
+
+  scsi_hardware = "virtio-scsi-single"
+
+  operating_system {
+    type = "l26"
   }
 
   started = true

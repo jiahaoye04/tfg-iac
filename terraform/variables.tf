@@ -25,5 +25,5 @@ variable "network_bridge" {
 variable "cpu_type" {
   description = "Tipo de CPU para las VMs"
   type        = string
-  default     = "x86-64-v2-AES"
+  default     = "host"
 }
