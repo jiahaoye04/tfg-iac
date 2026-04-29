@@ -36,3 +36,15 @@ module "vaultwarden" {
   network_bridge = var.network_bridge
   cpu_type       = var.cpu_type
 }
+
+module "postgresql" {
+  source         = "./modules/vm"
+  vm_id          = 105
+  name           = "postgresql"
+  cores          = 1
+  memory         = 2048
+  proxmox_node   = var.proxmox_node
+  template_vm_id = var.template_vm_id
+  network_bridge = var.network_bridge
+  cpu_type       = var.cpu_type
+}

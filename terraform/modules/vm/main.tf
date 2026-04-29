@@ -28,6 +28,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
     datastore_id = "local-lvm"
     file_format  = "raw"
     type         = "4m"
+    pre_enrolled_keys = true
   }
 
   cpu {
