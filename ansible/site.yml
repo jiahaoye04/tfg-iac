@@ -1,0 +1,18 @@
+---
+- name: Configuración base de todas las VMs
+  hosts: all
+  become: true
+  roles:
+    - base
+
+- name: Configuración de Nextcloud
+  hosts: nextcloud
+  become: true
+  roles:
+    - nextcloud
+
+- name: Configuración de Vaultwarden
+  hosts: vaultwarden
+  become: true
+  roles:
+    - vaultwarden

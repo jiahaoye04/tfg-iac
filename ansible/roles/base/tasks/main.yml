@@ -1,0 +1,41 @@
+---
+- name: Actualizar caché de paquetes
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Actualizar todos los paquetes
+  apt:
+    upgrade: dist
+
+- name: Instalar paquetes básicos
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - ufw
+      - unzip
+      - ca-certificates
+      - gnupg
+    state: present
+
+- name: Configurar UFW - política por defecto denegar entrada
+  ufw:
+    default: deny
+    direction: incoming
+
+- name: Configurar UFW - política por defecto permitir salida
+  ufw:
+    default: allow
+    direction: outgoing
+
+- name: Configurar UFW - permitir SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Activar UFW
+  ufw:
+    state: enabled
