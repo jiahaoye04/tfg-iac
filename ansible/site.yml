@@ -16,3 +16,9 @@
   become: true
   roles:
     - vaultwarden
+
+- name: Configuración de PostgreSQL
+  hosts: postgresql
+  become: true
+  roles:
+    - postgresql

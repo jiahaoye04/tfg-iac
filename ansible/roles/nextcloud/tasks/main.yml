@@ -1,0 +1,80 @@
+---
+- name: Instalar dependencias de Docker
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+
+- name: Añadir clave GPG de Docker
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Añadir repositorio de Docker
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable"
+    state: present
+
+- name: Instalar Docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Asegurar que Docker está corriendo
+  systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Añadir usuario jiahao al grupo docker
+  user:
+    name: jiahao
+    groups: docker
+    append: true
+
+- name: Crear directorio de datos de Nextcloud
+  file:
+    path: /opt/nextcloud
+    state: directory
+    mode: '0755'
+
+- name: Crear fichero docker-compose de Nextcloud
+  copy:
+    dest: /opt/nextcloud/docker-compose.yml
+    content: |
+      version: '3'
+      services:
+        nextcloud:
+          image: nextcloud:latest
+          container_name: nextcloud
+          restart: always
+          ports:
+            - "8080:80"
+          environment:
+            - POSTGRES_HOST=192.168.100.15
+            - POSTGRES_DB=nextcloud
+            - POSTGRES_USER=nextcloud
+            - POSTGRES_PASSWORD={{ nextcloud_db_password }}
+            - NEXTCLOUD_TRUSTED_DOMAINS=192.168.100.13
+          volumes:
+            - /opt/nextcloud/data:/var/www/html
+
+- name: Abrir puerto Nextcloud en UFW
+  ufw:
+    rule: allow
+    port: "8080"
+    proto: tcp
+
+- name: Lanzar Nextcloud con Docker Compose
+  shell: docker compose up -d
+  args:
+    chdir: /opt/nextcloud

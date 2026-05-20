@@ -39,3 +39,7 @@
 - name: Activar UFW
   ufw:
     state: enabled
+
+- name: Configurar hostname de la VM
+  hostname:
+    name: "{{ vm_hostname }}"

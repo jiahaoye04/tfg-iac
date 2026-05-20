@@ -1,0 +1,58 @@
+---
+- name: Instalar PostgreSQL
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+
+- name: Asegurar que PostgreSQL está corriendo
+  systemd:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Crear base de datos para Nextcloud
+  become_user: postgres
+  postgresql_db:
+    name: nextcloud
+    encoding: UTF8
+    state: present
+
+- name: Crear usuario para Nextcloud
+  become_user: postgres
+  postgresql_user:
+    name: nextcloud
+    password: "{{ nextcloud_db_password }}"
+    state: present
+
+- name: Conceder privilegios al usuario nextcloud
+  become_user: postgres
+  postgresql_privs:
+    database: nextcloud
+    role: nextcloud
+    privs: ALL
+    type: database
+    state: present
+
+- name: Configurar PostgreSQL para aceptar conexiones remotas
+  lineinfile:
+    path: /etc/postgresql/14/main/postgresql.conf
+    regexp: "^#listen_addresses"
+    line: "listen_addresses = '*'"
+    state: present
+  notify: reiniciar postgresql
+
+- name: Permitir conexión desde red interna en pg_hba.conf
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    line: "host    nextcloud    nextcloud    192.168.100.0/24    md5"
+    state: present
+  notify: reiniciar postgresql
+
+- name: Abrir puerto PostgreSQL en UFW
+  ufw:
+    rule: allow
+    port: "5432"
+    proto: tcp
