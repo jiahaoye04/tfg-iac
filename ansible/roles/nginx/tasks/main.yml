@@ -1,0 +1,74 @@
+---
+- name: Asegurar que Nginx está instalado
+  apt:
+    name: nginx
+    state: present
+
+- name: Asegurar que Nginx está corriendo
+  systemd:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Configurar proxy inverso para Nextcloud y Vaultwarden
+  copy:
+    dest: /etc/nginx/sites-available/jiahaoye-tfg.duckdns.org
+    content: |
+      server {
+          listen 80;
+          server_name jiahaoye-tfg.duckdns.org;
+          return 301 https://$host$request_uri;
+      }
+
+      server {
+          listen 443 ssl;
+          server_name jiahaoye-tfg.duckdns.org;
+
+          ssl_certificate /etc/letsencrypt/live/jiahaoye-tfg.duckdns.org/fullchain.pem;
+          ssl_certificate_key /etc/letsencrypt/live/jiahaoye-tfg.duckdns.org/privkey.pem;
+
+          location /nextcloud/ {
+              allow 10.0.0.0/24;
+              allow 192.168.100.0/24;
+              allow 192.168.1.0/24;
+              deny all;
+              proxy_pass http://192.168.100.13:8080/;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+          }
+
+          location /vaultwarden/ {
+              proxy_pass http://192.168.100.14:8080/;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+          }
+
+          location / {
+              return 200 'Nginx OK - jiahaoye-tfg.duckdns.org';
+              add_header Content-Type text/plain;
+          }
+      }
+  notify: recargar nginx
+
+- name: Activar sitio en sites-enabled
+  file:
+    src: /etc/nginx/sites-available/jiahaoye-tfg.duckdns.org
+    dest: /etc/nginx/sites-enabled/jiahaoye-tfg.duckdns.org
+    state: link
+  notify: recargar nginx
+
+- name: Abrir puerto HTTP en UFW
+  ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+
+- name: Abrir puerto HTTPS en UFW
+  ufw:
+    rule: allow
+    port: "443"
+    proto: tcp

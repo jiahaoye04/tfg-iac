@@ -65,6 +65,9 @@
             - POSTGRES_USER=nextcloud
             - POSTGRES_PASSWORD={{ nextcloud_db_password }}
             - NEXTCLOUD_TRUSTED_DOMAINS=192.168.100.13
+            - OVERWRITEWEBROOT=/nextcloud
+            - OVERWRITEPROTOCOL=https
+            - OVERWRITEHOST=jiahaoye-tfg.duckdns.org
           volumes:
             - /opt/nextcloud/data:/var/www/html
 
@@ -74,7 +77,14 @@
     port: "8080"
     proto: tcp
 
-- name: Lanzar Nextcloud con Docker Compose
-  shell: docker compose up -d
+- name: Recrear contenedor Nextcloud con nueva configuración
+  shell: docker compose down && docker compose up -d
   args:
     chdir: /opt/nextcloud
+
+- name: Añadir dominio de confianza a Nextcloud
+  shell: |
+    docker exec nextcloud php occ config:system:set trusted_domains 1 --value=jiahaoye-tfg.duckdns.org
+  args:
+    chdir: /opt/nextcloud
+

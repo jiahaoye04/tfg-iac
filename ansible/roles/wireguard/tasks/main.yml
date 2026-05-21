@@ -1,0 +1,25 @@
+---
+- name: Instalar WireGuard
+  apt:
+    name: wireguard
+    state: present
+
+- name: Asegurar que WireGuard está corriendo
+  systemd:
+    name: wg-quick@wg0
+    state: started
+    enabled: true
+
+- name: Abrir puerto WireGuard en UFW
+  ufw:
+    rule: allow
+    port: "51820"
+    proto: udp
+
+- name: Habilitar IP forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true

@@ -61,7 +61,7 @@
             - "8080:80"
           environment:
             - WEBSOCKET_ENABLED=true
-            - SIGNUPS_ALLOWED=true
+            - SIGNUPS_ALLOWED=false
           volumes:
             - /opt/vaultwarden/data:/data
 

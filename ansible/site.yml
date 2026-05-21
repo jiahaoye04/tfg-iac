@@ -22,3 +22,15 @@
   become: true
   roles:
     - postgresql
+
+- name: Configuración de Nginx
+  hosts: nginx
+  become: true
+  roles:
+    - nginx
+
+- name: Configuración de WireGuard
+  hosts: wireguard
+  become: true
+  roles:
+    - wireguard
