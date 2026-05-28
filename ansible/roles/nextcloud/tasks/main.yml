@@ -47,6 +47,13 @@
     state: directory
     mode: '0755'
 
+- name: Crear fichero .env de Nextcloud
+  copy:
+    dest: /opt/nextcloud/.env
+    mode: '0600'
+    content: |
+      NEXTCLOUD_DB_PASSWORD={{ nextcloud_db_password }}
+
 - name: Crear fichero docker-compose de Nextcloud
   copy:
     dest: /opt/nextcloud/docker-compose.yml

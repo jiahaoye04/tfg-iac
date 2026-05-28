@@ -41,17 +41,23 @@
     groups: docker
     append: true
 
-- name: Crear directorio de datos de Vaultwarden
+- name: Crear directorio de Vaultwarden
   file:
     path: /opt/vaultwarden
     state: directory
     mode: '0755'
 
+- name: Crear fichero .env de Vaultwarden
+  copy:
+    dest: /opt/vaultwarden/.env
+    mode: '0600'
+    content: |
+      VAULTWARDEN_DB_PASSWORD={{ vaultwarden_db_password }}
+
 - name: Crear fichero docker-compose de Vaultwarden
   copy:
     dest: /opt/vaultwarden/docker-compose.yml
     content: |
-      version: '3'
       services:
         vaultwarden:
           image: vaultwarden/server:latest
@@ -59,9 +65,12 @@
           restart: always
           ports:
             - "8080:80"
+          env_file:
+            - .env
           environment:
             - WEBSOCKET_ENABLED=true
-            - SIGNUPS_ALLOWED=false
+            - SIGNUPS_ALLOWED=true
+            - DATABASE_URL=postgresql://vaultwarden:${VAULTWARDEN_DB_PASSWORD}@192.168.100.15/vaultwarden
           volumes:
             - /opt/vaultwarden/data:/data
 

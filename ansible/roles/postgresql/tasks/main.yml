@@ -36,6 +36,29 @@
     type: database
     state: present
 
+- name: Crear base de datos para Vaultwarden
+  become_user: postgres
+  postgresql_db:
+    name: vaultwarden
+    encoding: UTF8
+    state: present
+
+- name: Crear usuario para Vaultwarden
+  become_user: postgres
+  postgresql_user:
+    name: vaultwarden
+    password: "{{ vaultwarden_db_password }}"
+    state: present
+
+- name: Conceder privilegios al usuario vaultwarden
+  become_user: postgres
+  postgresql_privs:
+    database: vaultwarden
+    role: vaultwarden
+    privs: ALL
+    type: database
+    state: present
+
 - name: Configurar PostgreSQL para aceptar conexiones remotas
   lineinfile:
     path: /etc/postgresql/14/main/postgresql.conf
@@ -44,10 +67,17 @@
     state: present
   notify: reiniciar postgresql
 
-- name: Permitir conexión desde red interna en pg_hba.conf
+- name: Permitir conexión de Nextcloud en pg_hba.conf
   lineinfile:
     path: /etc/postgresql/14/main/pg_hba.conf
-    line: "host    nextcloud    nextcloud    192.168.100.0/24    md5"
+    line: "host    nextcloud    nextcloud    192.168.100.13/32    md5"
+    state: present
+  notify: reiniciar postgresql
+
+- name: Permitir conexión de Vaultwarden en pg_hba.conf
+  lineinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    line: "host    vaultwarden  vaultwarden  192.168.100.14/32    md5"
     state: present
   notify: reiniciar postgresql
 
