@@ -34,3 +34,9 @@
   become: true
   roles:
     - wireguard
+
+- name: Configuración de Homer
+  hosts: homer
+  become: true
+  roles:
+    - homer

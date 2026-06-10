@@ -1,0 +1,97 @@
+---
+- name: Instalar dependencias de Docker
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+
+- name: Añadir clave GPG de Docker
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Añadir repositorio de Docker
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable"
+    state: present
+
+- name: Instalar Docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Asegurar que Docker está corriendo
+  systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Añadir usuario jiahao al grupo docker
+  user:
+    name: jiahao
+    groups: docker
+    append: true
+
+- name: Crear directorio de Homer
+  file:
+    path: /opt/homer/assets
+    state: directory
+    mode: "0755"
+
+- name: Generar configuración de Homer
+  template:
+    src: config.yml.j2
+    dest: /opt/homer/assets/config.yml
+    mode: "0644"
+  notify: recrear homer
+
+- name: Crear fichero docker-compose de Homer
+  copy:
+    dest: /opt/homer/docker-compose.yml
+    mode: "0644"
+    content: |
+      version: '3'
+      services:
+        homer:
+          image: b4bz/homer:latest
+          container_name: homer
+          restart: always
+          ports:
+            - "{{ homer_port }}:8080"
+          volumes:
+            - /opt/homer/assets:/www/assets
+  notify: recrear homer
+
+- name: Abrir puerto Homer en UFW
+  ufw:
+    rule: allow
+    port: "{{ homer_port }}"
+    proto: tcp
+
+- name: Levantar contenedor Homer
+  shell: docker compose up -d
+  args:
+    chdir: /opt/homer
+
+- name: Crear directorio de iconos
+  file:
+    path: /opt/homer/assets/icons
+    state: directory
+    mode: "0755"
+
+- name: Descargar logos de los servicios
+  get_url:
+    url: "{{ item.icon_url }}"
+    dest: "/opt/homer/{{ item.logo }}"
+    mode: "0644"
+  loop: "{{ homer_services }}"
+  notify: recrear homer

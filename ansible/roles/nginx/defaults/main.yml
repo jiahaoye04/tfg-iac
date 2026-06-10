@@ -7,6 +7,7 @@ nginx_domain: "jiahaoye-tfg.duckdns.org"
 # Backends de los servicios
 nginx_nextcloud_backend: "http://192.168.100.13:8080"
 nginx_vaultwarden_backend: "http://192.168.100.14:8080"
+nginx_homer_backend: "http://192.168.100.16:8080"
 
 # Redes permitidas para acceder a Nextcloud
 nginx_allowed_networks:
@@ -16,3 +17,4 @@ nginx_allowed_networks:
 
 # Rate limiting
 nginx_rate_limit_burst: 20
+

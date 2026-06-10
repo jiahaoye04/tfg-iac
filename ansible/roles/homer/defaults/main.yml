@@ -1,0 +1,15 @@
+---
+homer_domain: "jiahaoye-tfg.duckdns.org"
+homer_port: 8080
+
+homer_services:
+  - name: "Nextcloud"
+    subtitle: "Almacenamiento en la nube"
+    url: "https://jiahaoye-tfg.duckdns.org/nextcloud/"
+    logo: "assets/icons/nextcloud.png"
+    icon_url: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/nextcloud.png"
+  - name: "Vaultwarden"
+    subtitle: "Gestor de contraseñas"
+    url: "https://jiahaoye-tfg.duckdns.org/vaultwarden/"
+    logo: "assets/icons/vaultwarden.png"
+    icon_url: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/vaultwarden.png"
