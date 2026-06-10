@@ -10,54 +10,28 @@
     state: started
     enabled: true
 
-- name: Configurar proxy inverso para Nextcloud y Vaultwarden
+- name: Copiar configuración de rate limiting
   copy:
-    dest: /etc/nginx/sites-available/jiahaoye-tfg.duckdns.org
-    content: |
-      server {
-          listen 80;
-          server_name jiahaoye-tfg.duckdns.org;
-          return 301 https://$host$request_uri;
-      }
+    src: rate_limit.conf
+    dest: /etc/nginx/conf.d/rate_limit.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: recargar nginx
 
-      server {
-          listen 443 ssl;
-          server_name jiahaoye-tfg.duckdns.org;
-
-          ssl_certificate /etc/letsencrypt/live/jiahaoye-tfg.duckdns.org/fullchain.pem;
-          ssl_certificate_key /etc/letsencrypt/live/jiahaoye-tfg.duckdns.org/privkey.pem;
-
-          location /nextcloud/ {
-              allow 10.0.0.0/24;
-              allow 192.168.100.0/24;
-              allow 192.168.1.0/24;
-              deny all;
-              proxy_pass http://192.168.100.13:8080/;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-          }
-
-          location /vaultwarden/ {
-              proxy_pass http://192.168.100.14:8080/;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-          }
-
-          location / {
-              return 200 'Nginx OK - jiahaoye-tfg.duckdns.org';
-              add_header Content-Type text/plain;
-          }
-      }
+- name: Configurar proxy inverso (cabeceras seguridad + rate limiting)
+  template:
+    src: jiahaoye-tfg.duckdns.org.j2
+    dest: /etc/nginx/sites-available/{{ nginx_domain }}
+    owner: root
+    group: root
+    mode: "0644"
   notify: recargar nginx
 
 - name: Activar sitio en sites-enabled
   file:
-    src: /etc/nginx/sites-available/jiahaoye-tfg.duckdns.org
-    dest: /etc/nginx/sites-enabled/jiahaoye-tfg.duckdns.org
+    src: /etc/nginx/sites-available/{{ nginx_domain }}
+    dest: /etc/nginx/sites-enabled/{{ nginx_domain }}
     state: link
   notify: recargar nginx
 
