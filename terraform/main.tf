@@ -14,15 +14,18 @@ provider "proxmox" {
 }
 
 module "nextcloud" {
-  source         = "./modules/vm"
-  vm_id          = 103
-  name           = "nextcloud"
-  cores          = 2
-  memory         = 8192
-  proxmox_node   = var.proxmox_node
-  template_vm_id = var.template_vm_id
-  network_bridge = var.network_bridge
-  cpu_type       = var.cpu_type
+  source              = "./modules/vm"
+  vm_id               = 103
+  name                = "nextcloud"
+  cores               = 2
+  memory              = 8192
+  disk_size           = 50
+  data_disk_size      = 300
+  data_disk_datastore = "hdd-data"
+  proxmox_node        = var.proxmox_node
+  template_vm_id      = var.template_vm_id
+  network_bridge      = var.network_bridge
+  cpu_type            = var.cpu_type
 }
 
 module "vaultwarden" {
@@ -43,6 +46,7 @@ module "postgresql" {
   name           = "postgresql"
   cores          = 1
   memory         = 6144
+  disk_size      = 64
   proxmox_node   = var.proxmox_node
   template_vm_id = var.template_vm_id
   network_bridge = var.network_bridge
@@ -54,7 +58,7 @@ module "homer" {
   vm_id          = 106
   name           = "homer"
   cores          = 1
-  memory         = 2048
+  memory         = 4096
   proxmox_node   = var.proxmox_node
   template_vm_id = var.template_vm_id
   network_bridge = var.network_bridge

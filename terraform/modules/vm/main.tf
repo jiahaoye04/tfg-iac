@@ -31,6 +31,24 @@ resource "proxmox_virtual_environment_vm" "vm" {
     pre_enrolled_keys = true
   }
 
+  dynamic "disk" {
+    for_each = var.disk_size != null ? [1] : []
+    content {
+      datastore_id = "local-lvm"
+      interface    = "virtio0"
+      size         = var.disk_size
+    }
+  }
+
+  dynamic "disk" {
+    for_each = var.data_disk_size != null ? [1] : []
+    content {
+      datastore_id = var.data_disk_datastore
+      interface    = "virtio1"
+      size         = var.data_disk_size
+    }
+  }
+
   cpu {
     cores = var.cores
     type  = var.cpu_type
