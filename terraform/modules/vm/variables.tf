@@ -39,3 +39,21 @@ variable "cpu_type" {
   description = "Tipo de CPU"
   type        = string
 }
+
+variable "disk_size" {
+  description = "Tamaño del disco principal en GB. Si es null, el disco se hereda del template clonado (sin bloque disk)."
+  type        = number
+  default     = null
+}
+
+variable "data_disk_size" {
+  description = "Tamaño en GB de un disco de datos secundario (virtio1). null = sin disco de datos."
+  type        = number
+  default     = null
+}
+
+variable "data_disk_datastore" {
+  description = "Almacenamiento donde se crea el disco de datos secundario."
+  type        = string
+  default     = "local-lvm"
+}
