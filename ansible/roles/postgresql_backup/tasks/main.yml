@@ -1,0 +1,39 @@
+---
+- name: Crear directorio de backups de PostgreSQL
+  ansible.builtin.file:
+    path: "{{ pg_backup_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0700"
+
+- name: Desplegar el script de backup (pg_dumpall + rotación)
+  ansible.builtin.template:
+    src: pg_backup.sh.j2
+    dest: /usr/local/bin/pg_backup.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Programar el backup diario en cron (usuario postgres, 02:30)
+  ansible.builtin.cron:
+    name: "Backup diario PostgreSQL (pg_dumpall)"
+    user: postgres
+    minute: "{{ pg_backup_minute }}"
+    hour: "{{ pg_backup_hour }}"
+    job: "/usr/local/bin/pg_backup.sh"
+
+- name: Ejecutar un backup inicial ahora (verificación)
+  ansible.builtin.command: /usr/local/bin/pg_backup.sh
+  become_user: postgres
+  changed_when: true
+
+- name: Listar los backups generados
+  ansible.builtin.command: "ls -lh {{ pg_backup_dir }}"
+  become_user: postgres
+  register: pg_backup_listing
+  changed_when: false
+
+- name: Mostrar los backups
+  ansible.builtin.debug:
+    var: pg_backup_listing.stdout_lines

@@ -70,6 +70,7 @@
           environment:
             - WEBSOCKET_ENABLED=true
             - SIGNUPS_ALLOWED=true
+            - DOMAIN=https://jiahaoye-tfg.duckdns.org/vaultwarden
             - DATABASE_URL=postgresql://vaultwarden:${VAULTWARDEN_DB_PASSWORD}@192.168.100.15/vaultwarden
           volumes:
             - /opt/vaultwarden/data:/data

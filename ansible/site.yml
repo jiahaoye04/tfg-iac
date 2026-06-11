@@ -21,7 +21,9 @@
   hosts: postgresql
   become: true
   roles:
+    - disk_resize
     - postgresql
+    - postgresql_backup
 
 - name: Configuración de Nginx
   hosts: nginx

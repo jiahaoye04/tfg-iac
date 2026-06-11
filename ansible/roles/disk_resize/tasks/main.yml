@@ -1,0 +1,34 @@
+---
+- name: Instalar utilidades de expansión de disco (growpart, parted)
+  ansible.builtin.apt:
+    name:
+      - cloud-guest-utils
+      - parted
+    state: present
+    update_cache: true
+
+- name: Ampliar la partición para ocupar todo el disco (growpart)
+  ansible.builtin.command: "growpart {{ disk_device }} {{ disk_partition_number }}"
+  register: growpart_result
+  changed_when: "'CHANGED' in growpart_result.stdout"
+  failed_when:
+    - growpart_result.rc != 0
+    - "'NOCHANGE' not in (growpart_result.stdout ~ growpart_result.stderr)"
+
+- name: Redimensionar el Physical Volume de LVM (pvresize)
+  ansible.builtin.command: "pvresize {{ disk_device }}{{ disk_partition_number }}"
+  register: pvresize_result
+  changed_when: "'changed' in pvresize_result.stdout"
+
+- name: Extender el Logical Volume a todo el espacio libre (lvextend)
+  ansible.builtin.command: "lvextend -l +100%FREE /dev/{{ disk_vg }}/{{ disk_lv }}"
+  register: lvextend_result
+  changed_when: "'successfully resized' in lvextend_result.stdout"
+  failed_when:
+    - lvextend_result.rc != 0
+    - "'matches existing size' not in (lvextend_result.stdout ~ lvextend_result.stderr)"
+
+- name: Redimensionar el sistema de ficheros ext4 (resize2fs)
+  ansible.builtin.command: "resize2fs /dev/{{ disk_vg }}/{{ disk_lv }}"
+  register: resize2fs_result
+  changed_when: "'Nothing to do' not in resize2fs_result.stderr"

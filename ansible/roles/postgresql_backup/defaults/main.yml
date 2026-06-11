@@ -1,0 +1,5 @@
+---
+pg_backup_dir: /var/backups/postgresql
+pg_backup_keep: 7
+pg_backup_hour: "2"
+pg_backup_minute: "30"

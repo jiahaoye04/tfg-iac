@@ -1,0 +1,3 @@
+---
+nextcloud_data_device: /dev/vdb
+nextcloud_data_mount: /mnt/nextcloud-data

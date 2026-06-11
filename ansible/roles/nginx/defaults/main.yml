@@ -16,5 +16,5 @@ nginx_allowed_networks:
   - "192.168.1.0/24"     # Red LAN (NAT)
 
 # Rate limiting
-nginx_rate_limit_burst: 20
+nginx_rate_limit_burst: 200
 

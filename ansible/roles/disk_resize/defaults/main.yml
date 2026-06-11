@@ -1,0 +1,5 @@
+---
+disk_device: /dev/vda
+disk_partition_number: 3
+disk_vg: ubuntu-vg
+disk_lv: ubuntu-lv

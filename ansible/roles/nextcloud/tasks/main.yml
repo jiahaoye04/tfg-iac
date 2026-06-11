@@ -41,12 +41,52 @@
     groups: docker
     append: true
 
-- name: Crear directorio de datos de Nextcloud
+- name: Crear directorio de Nextcloud
   file:
     path: /opt/nextcloud
     state: directory
     mode: '0755'
 
+# ---------- Disco de datos en HDD (almacenamiento frío) ----------
+- name: Comprobar si el disco de datos ya tiene sistema de ficheros
+  ansible.builtin.command: "blkid -o value -s TYPE {{ nextcloud_data_device }}"
+  register: nc_data_fstype
+  failed_when: false
+  changed_when: false
+
+- name: Formatear el disco de datos en ext4 (solo si está vacío)
+  ansible.builtin.command: "mkfs.ext4 -F {{ nextcloud_data_device }}"
+  when: nc_data_fstype.stdout == ""
+
+- name: Obtener el UUID del disco de datos
+  ansible.builtin.command: "blkid -o value -s UUID {{ nextcloud_data_device }}"
+  register: nc_data_uuid
+  changed_when: false
+
+- name: Crear el punto de montaje del disco de datos
+  ansible.builtin.file:
+    path: "{{ nextcloud_data_mount }}"
+    state: directory
+    mode: '0755'
+
+- name: Añadir el disco de datos a /etc/fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: " {{ nextcloud_data_mount }} "
+    line: "UUID={{ nc_data_uuid.stdout }} {{ nextcloud_data_mount }} ext4 defaults,nofail 0 2"
+    state: present
+
+- name: Comprobar si el disco de datos ya está montado
+  ansible.builtin.command: "mountpoint -q {{ nextcloud_data_mount }}"
+  register: nc_data_mounted
+  failed_when: false
+  changed_when: false
+
+- name: Montar el disco de datos
+  ansible.builtin.command: "mount {{ nextcloud_data_mount }}"
+  when: nc_data_mounted.rc != 0
+
+# ---------- Configuración de Nextcloud ----------
 - name: Crear fichero .env de Nextcloud
   copy:
     dest: /opt/nextcloud/.env
@@ -77,6 +117,7 @@
             - OVERWRITEHOST=jiahaoye-tfg.duckdns.org
           volumes:
             - /opt/nextcloud/data:/var/www/html
+            - {{ nextcloud_data_mount }}:/var/www/html/data
 
 - name: Abrir puerto Nextcloud en UFW
   ufw:
@@ -84,8 +125,40 @@
     port: "8080"
     proto: tcp
 
-- name: Recrear contenedor Nextcloud con nueva configuración
-  shell: docker compose down && docker compose up -d
+# ---------- Migración de datos al HDD (solo la primera vez) ----------
+- name: Comprobar si el HDD ya contiene datos de Nextcloud (.ocdata)
+  ansible.builtin.stat:
+    path: "{{ nextcloud_data_mount }}/.ncdata"
+  register: nc_hdd_populated
+
+- name: Comprobar si existe data antigua de Nextcloud en el SSD
+  ansible.builtin.stat:
+    path: /opt/nextcloud/data/data/.ncdata
+  register: nc_old_data
+
+- name: Parar Nextcloud antes de migrar (solo si hay datos que migrar)
+  command: docker compose down
+  args:
+    chdir: /opt/nextcloud
+  when:
+    - not nc_hdd_populated.stat.exists
+    - nc_old_data.stat.exists
+
+- name: Migrar ficheros de usuario del SSD al HDD (preservando permisos)
+  command: "cp -a /opt/nextcloud/data/data/. {{ nextcloud_data_mount }}/"
+  when:
+    - not nc_hdd_populated.stat.exists
+    - nc_old_data.stat.exists
+
+- name: Asegurar propietario www-data (UID 33) en el disco de datos
+  ansible.builtin.file:
+    path: "{{ nextcloud_data_mount }}"
+    owner: "33"
+    group: "33"
+    recurse: true
+
+- name: Recrear contenedor Nextcloud con la nueva configuración
+  shell: docker compose up -d
   args:
     chdir: /opt/nextcloud
 
@@ -94,4 +167,3 @@
     docker exec nextcloud php occ config:system:set trusted_domains 1 --value=jiahaoye-tfg.duckdns.org
   args:
     chdir: /opt/nextcloud
-
