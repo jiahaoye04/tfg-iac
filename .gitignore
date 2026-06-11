@@ -13,4 +13,4 @@
 *.key
 *.env
 
-*.claude
+*.claudeansible/roles/*/vars/main.yml
